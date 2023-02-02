@@ -69,13 +69,13 @@ impl<F: FieldExt> FiboChip<F> {
                 // {val=新值 cell=(region#, offset, col#)}
 
                 let a_cell = region
-                    .assign_advice(|| "a", self.config.advice[0], 0, || a.ok_or(Error::Synthesis))
+                    .assign_advice(|| "a", self.config.advice[0], 0, || Value::known(a.unwrap()))
                     .map(ACell)?;
                 let b_cell = region
-                    .assign_advice(|| "b", self.config.advice[1], 0, ||  b.ok_or(Error::Synthesis))
+                    .assign_advice(|| "b", self.config.advice[1], 0, ||  Value::known(b.unwrap()))
                     .map(ACell)?;
                 let c_cell = region
-                    .assign_advice(|| "c", self.config.advice[2], 0, || c_val.ok_or(Error::Synthesis))
+                    .assign_advice(|| "c", self.config.advice[2], 0, || Value::known(c_val.unwrap()))
                     .map(ACell)?;
                 Ok((a_cell, b_cell, c_cell))
             }
@@ -102,7 +102,7 @@ impl<F: FieldExt> FiboChip<F> {
                 let a = prev_b.0.copy_advice(|| "a", &mut region, self.config.advice[0], 0).map(ACell)?;
                 let b = prev_c.0.copy_advice(|| "b", &mut region, self.config.advice[1], 0).map(ACell)?;
                 let c = region
-                    .assign_advice(|| "c", self.config.advice[2], 0, || c_val.ok_or(Error::Synthesis))
+                    .assign_advice(|| "c", self.config.advice[2], 0, || c_val)
                     .map(ACell)?;
 
                 Ok((b, c))
@@ -169,7 +169,7 @@ impl<F: FieldExt> Circuit<F> for MyCircuit<F> {
 
 
 fn main() {
-    let k = 7;
+    let k = 4;
     let a = Fp::from(1);
     let b = Fp::from(1);
     let out = Fp::from(55);
@@ -178,5 +178,13 @@ fn main() {
     let public_input = vec![a, b, out];
 
     let prover = MockProver::run(k, &circuit, vec![public_input]).unwrap();
-    prover.assert_satisfied();
+
+    use plotters::prelude::*;
+    let root = BitMapBackend::new("fib-1-layout.png", (500, 1000)).into_drawing_area();
+    root.fill(&WHITE).unwrap();
+    let root = root.titled("Fib 1 Layout", ("sans-serif", 60)).unwrap();
+    halo2_proofs::dev::CircuitLayout::default()
+        .render(4, &circuit, &root)
+        .unwrap();
+
 }

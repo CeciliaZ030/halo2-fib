@@ -62,9 +62,9 @@ impl<F: FieldExt> FiboChip<F> {
             |mut region| {
                 self.config.selector.enable(&mut region, 0).unwrap();
                 let mut a_cell = region
-                    .assign_advice(|| "a", self.config.advice, 0, || a.ok_or(Error::Synthesis)).map(ACell)?;
+                    .assign_advice(|| "a", self.config.advice, 0, || Value::known(a.unwrap())).map(ACell)?;
                 let mut b_cell = region
-                    .assign_advice(|| "b", self.config.advice, 1, ||  b.ok_or(Error::Synthesis)).map(ACell)?;
+                    .assign_advice(|| "b", self.config.advice, 1, ||Value::known(b.unwrap())).map(ACell)?;
 
                 let (a_ret, b_ret) = (a_cell.clone(), b_cell.clone());
 
@@ -73,7 +73,7 @@ impl<F: FieldExt> FiboChip<F> {
                     let b = b_cell.0.value();
                     let c = a.and_then(|a| b.map(|b| *a + *b));
                     let c_cell = region
-                        .assign_advice(|| "c", self.config.advice, i, || c.ok_or(Error::Synthesis)).map(ACell)?;
+                        .assign_advice(|| "c", self.config.advice, i, || c).map(ACell)?;
                     a_cell = b_cell;
                     b_cell = c_cell;
 
@@ -126,14 +126,20 @@ impl<F: FieldExt> Circuit<F> for MyCircuit<F> {
 
 
 fn main() {
-    let k = 7;
+    let k = 4;
     let a = Fp::from(1);
     let b = Fp::from(1);
     let out = Fp::from(55);
     let circuit = MyCircuit {a: Some(a), b: Some(b)};
 
     let public_input = vec![a, b, out];
-
     let prover = MockProver::run(k, &circuit, vec![public_input]).unwrap();
-    prover.assert_satisfied();
+
+    use plotters::prelude::*;
+    let root = BitMapBackend::new("fib-2-layout.png", (500, 1000)).into_drawing_area();
+    root.fill(&WHITE).unwrap();
+    let root = root.titled("Fib 2 Layout", ("sans-serif", 60)).unwrap();
+    halo2_proofs::dev::CircuitLayout::default()
+        .render(4, &circuit, &root)
+        .unwrap();
 }
