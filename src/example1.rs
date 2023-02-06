@@ -105,6 +105,7 @@ impl<F: FieldExt> FiboChip<F> {
                     .assign_advice(|| "c", self.config.advice[2], 0, || c_val)
                     .map(ACell)?;
 
+                let bc= b.0.cell();
                 Ok((b, c))
             }
         )
@@ -184,6 +185,7 @@ fn main() {
     root.fill(&WHITE).unwrap();
     let root = root.titled("Fib 1 Layout", ("sans-serif", 60)).unwrap();
     halo2_proofs::dev::CircuitLayout::default()
+        .show_equality_constraints(true)
         .render(4, &circuit, &root)
         .unwrap();
 

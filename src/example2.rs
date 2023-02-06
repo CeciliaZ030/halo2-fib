@@ -124,6 +124,27 @@ impl<F: FieldExt> Circuit<F> for MyCircuit<F> {
     }
 }
 
+mod test {
+    use super::*;
+
+    #[test]
+    #[cfg(feature = "dev-graph")]
+    fn testt() {
+        use plotters::prelude::*;
+        let k = 4;
+        let a = Fp::from(1);
+        let b = Fp::from(1);
+        let out = Fp::from(55);
+        let circuit = MyCircuit {a: Some(a), b: Some(b)};
+
+        let root = BitMapBackend::new("fib-22-layout.png", (500, 1000)).into_drawing_area();
+        root.fill(&WHITE).unwrap();
+        let root = root.titled("Fib 2 Layout", ("sans-serif", 60)).unwrap();
+        halo2_proofs::dev::CircuitLayout::default()
+            .render(4, &circuit, &root)
+            .unwrap();
+    }
+}
 
 fn main() {
     let k = 4;
@@ -134,12 +155,4 @@ fn main() {
 
     let public_input = vec![a, b, out];
     let prover = MockProver::run(k, &circuit, vec![public_input]).unwrap();
-
-    use plotters::prelude::*;
-    let root = BitMapBackend::new("fib-2-layout.png", (500, 1000)).into_drawing_area();
-    root.fill(&WHITE).unwrap();
-    let root = root.titled("Fib 2 Layout", ("sans-serif", 60)).unwrap();
-    halo2_proofs::dev::CircuitLayout::default()
-        .render(4, &circuit, &root)
-        .unwrap();
 }
