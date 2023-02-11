@@ -19,4 +19,6 @@ fn main() {
     halo2_proofs::dev::CircuitLayout::default()
         .render(4, &circuit, &root)
         .unwrap();
+
+    // Added something new
 }
